@@ -17,7 +17,7 @@ services:
       db:
         condition: service_healthy
   db:
-    image: postgres
+    image: postgres:18.1
     restart: always
     user: postgres
     volumes:
@@ -25,9 +25,7 @@ services:
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-    expose:
-      - 5433
+      - POSTGRES_PASS=${DB_PASSWORD}
     ports:
       - "5433:5432"
     healthcheck:
