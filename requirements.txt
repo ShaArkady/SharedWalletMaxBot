@@ -14,6 +14,8 @@ asyncpg==0.30.0
     # via sharedwalletbot (pyproject.toml)
 attrs==25.4.0
     # via aiohttp
+charset-normalizer==3.4.4
+    # via reportlab
 frozenlist==1.8.0
     # via
     #   aiohttp
@@ -30,6 +32,8 @@ multidict==6.7.0
     # via
     #   aiohttp
     #   yarl
+pillow==12.0.0
+    # via reportlab
 propcache==0.4.1
     # via
     #   aiohttp
@@ -47,6 +51,8 @@ pydantic-settings==2.12.0
 python-dotenv==1.2.1
     # via pydantic-settings
 pytz==2025.2
+    # via sharedwalletbot (pyproject.toml)
+reportlab==4.4.4
     # via sharedwalletbot (pyproject.toml)
 sqlalchemy==2.0.44
     # via sharedwalletbot (pyproject.toml)

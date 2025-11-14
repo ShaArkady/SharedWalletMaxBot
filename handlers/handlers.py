@@ -2,9 +2,11 @@ import json
 import logging
 from decimal import Decimal, InvalidOperation
 from collections import defaultdict
+import tempfile
+import os
 
 from maxapi import Dispatcher, F, Bot
-from maxapi.types import MessageCreated, Command, Message, MessageCallback, BotStarted
+from maxapi.types import MessageCreated, Command, Message, MessageCallback, BotStarted, InputMedia
 from maxapi.context import MemoryContext
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -18,6 +20,7 @@ from keyboards.inline import (
     incomes_list_kb, expenses_list_kb, confirm_delete_transaction_kb, membership_request_kb
 )
 from states.forms import WalletForm, TransactionForm
+from utils.pdf_stats import generate_pdf
 
 logger = logging.getLogger(__name__)
 
@@ -495,6 +498,25 @@ async def register_handlers(dp: Dispatcher):
         text += "Нажмите на кнопку, чтобы удалить трату:"
 
         await event.message.edit(text, attachments=[expenses_list_kb(expenses, wallet_id)])
+
+    @dp.message_callback(F.callback.payload.func(lambda p: json.loads(p).get("action") == "download_full_stats"))
+    async def download_full_stats(event: MessageCallback, context: MemoryContext):
+        payload = json.loads(event.callback.payload)
+        wallet_id = payload['wallet_id']
+        async with async_session_maker() as session:
+            wallet = await session.get(Wallet, wallet_id)
+            incomes = (await session.execute(select(Income).where(Income.wallet_id == wallet_id))).scalars().all()
+            expenses = (await session.execute(select(Expense).where(Expense.wallet_id == wallet_id))).scalars().all()
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+            generate_pdf(wallet, incomes, expenses, tmp.name)
+            filename = tmp.name
+        await event.bot.send_message(
+            user_id=event.from_user.user_id,
+            attachments=[InputMedia(filename)],
+            text="Подробная PDF-статистика по вашему счёту"
+        )
+        os.remove(filename)
 
     @dp.message_callback(F.callback.payload.func(lambda p: json.loads(p).get("action") == "delete_expense"))
     async def delete_expense_confirm(event: MessageCallback, context: MemoryContext):

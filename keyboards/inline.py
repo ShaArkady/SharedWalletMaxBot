@@ -29,6 +29,10 @@ def wallet_menu_kb(wallet_id: int, is_owner: bool):
     builder = InlineKeyboardBuilder()
     builder.row(
         CallbackButton(text="📈 Статистика", payload=json.dumps({"action": "stats", "wallet_id": wallet_id})),
+        CallbackButton(text="📄 Скачать статистику PDF",
+                       payload=json.dumps({"action": "download_full_stats", "wallet_id": wallet_id}))
+    )
+    builder.row(
         CallbackButton(text="💰 Пополнить", payload=json.dumps({"action": "add_capital", "wallet_id": wallet_id}))
     )
     builder.row(
