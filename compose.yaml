@@ -8,7 +8,7 @@
 # database or a cache. For examples, see the Awesome Compose repository:
 # https://github.com/docker/awesome-compose
 services:
-  app:
+  bot:
     restart: always
     build: .
     env_file:
@@ -21,13 +21,15 @@ services:
     restart: always
     user: postgres
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD_FILE=${DB_PASSWORD}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     expose:
-      - ${DB_PORT}
+      - 5433
+    ports:
+      - "5433:5432"
     healthcheck:
       test: [ "CMD", "pg_isready" ]
       interval: 10s

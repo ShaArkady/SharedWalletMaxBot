@@ -45,4 +45,4 @@ USER appuser
 COPY . .
 
 # Run the application.
-CMD .venv.bin.python3' main.py
+CMD python3 main.py

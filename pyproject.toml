@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.13"
 dependencies = [
+    "asyncpg>=0.30.0",
     "maxapi>=0.9.7",
+    "pydantic-settings>=2.12.0",
     "pytz>=2025.2",
     "sqlalchemy>=2.0.44",
 ]
