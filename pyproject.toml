@@ -1,0 +1,10 @@
+[project]
+name = "sharedwalletbot"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "maxapi>=0.9.7",
+    "pytz>=2025.2",
+    "sqlalchemy>=2.0.44",
+]
