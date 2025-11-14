@@ -34,7 +34,6 @@ class Income(Base):
     description: Mapped[str] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
 
-    # Связи
     wallet: Mapped["Wallet"] = relationship(back_populates="incomes")
     user: Mapped["User"] = relationship(back_populates="incomes")
 

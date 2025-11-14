@@ -110,6 +110,9 @@ async def register_handlers(dp: Dispatcher):
             wallet = Wallet(name=wallet_name, owner_id=user_id)
             session.add(wallet)
             await session.commit()
+            member = WalletMember(wallet_id=wallet.id, user_id=user_id)
+            session.add(member)
+            await session.commit()
             await event.message.answer(f"✅ Счёт «{wallet.name}» успешно создан! Его ID: `{wallet.id}`")
         await show_main_menu(message=None, user_id=event.from_user.user_id, context=context, bot=event.bot)
 
@@ -507,9 +510,14 @@ async def register_handlers(dp: Dispatcher):
             wallet = await session.get(Wallet, wallet_id)
             incomes = (await session.execute(select(Income).where(Income.wallet_id == wallet_id))).scalars().all()
             expenses = (await session.execute(select(Expense).where(Expense.wallet_id == wallet_id))).scalars().all()
+            wallet = (await session.execute(
+                select(Wallet).where(Wallet.id == wallet_id).options(
+                    selectinload(Wallet.members).selectinload(WalletMember.user))
+            )).scalar_one_or_none()
+            members = wallet.members
 
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-            generate_pdf(wallet, incomes, expenses, tmp.name)
+            generate_pdf(wallet, incomes, expenses, members, tmp.name)
             filename = tmp.name
         await event.bot.send_message(
             user_id=event.from_user.user_id,

@@ -5,7 +5,63 @@ from reportlab.lib import colors
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 
-def generate_pdf(wallet, incomes, expenses, filename: str):
+
+def calculate_debts(wallet, incomes, expenses, members):
+    member_ids = [m.user_id for m in members]
+    paid = {uid: 0 for uid in member_ids}
+    for inc in incomes:
+        paid[inc.user_id] += float(inc.amount)
+    spent = {uid: 0 for uid in member_ids}
+    for exp in expenses:
+        if exp.is_shared:
+            share = float(exp.amount) / len(member_ids)
+            for uid in member_ids:
+                spent[uid] += share
+        else:
+            spent[exp.user_id] += float(exp.amount)
+
+    balance = {uid: paid[uid] - spent[uid] for uid in member_ids}
+    return balance
+
+
+def debt_report(balance, members_dict):
+    creditors = sorted([(uid, amt) for uid, amt in balance.items() if amt > 0], key=lambda x: -x[1])
+    debtors = sorted([(uid, amt) for uid, amt in balance.items() if amt < 0], key=lambda x: x[1])
+    report = "\nИтоги по счету:\n"
+    for uid, amt in balance.items():
+        name = members_dict.get(uid, str(uid))
+        if amt > 0:
+            report += f"{name} (ID: {uid}) — переплатил {amt:.2f} ₽\n"
+        elif amt < 0:
+            report += f"{name} (ID: {uid}) — должен {-amt:.2f} ₽\n"
+        else:
+            report += f"{name} (ID: {uid}) — в нуле\n"
+    recs = []
+    i, j = 0, 0
+    while i < len(debtors) and j < len(creditors):
+        debtor_id, debtor_amt = debtors[i]
+        creditor_id, creditor_amt = creditors[j]
+        pay = min(-debtor_amt, creditor_amt)
+        if pay > 0:
+            d_name = members_dict.get(debtor_id, str(debtor_id))
+            c_name = members_dict.get(creditor_id, str(creditor_id))
+            recs.append(f"{d_name} должен {c_name} — {pay:.2f} ₽")
+            debtor_amt += pay
+            creditor_amt -= pay
+            debtors[i] = (debtor_id, debtor_amt)
+            creditors[j] = (creditor_id, creditor_amt)
+            if abs(debtor_amt) < 0.01:
+                i += 1
+            if abs(creditor_amt) < 0.01:
+                j += 1
+        else:
+            break
+    report += "\nКто кому сколько должен:\n" + "\n".join(recs)
+    return report
+
+
+
+def generate_pdf(wallet, incomes, expenses, members, filename: str):
     pdfmetrics.registerFont(TTFont('RobotoBold', 'utils/fonts/Roboto-Bold.ttf'))
     pdfmetrics.registerFont(TTFont('Roboto', 'utils/fonts/Roboto-Regular.ttf'))
 
@@ -63,5 +119,12 @@ def generate_pdf(wallet, incomes, expenses, filename: str):
     ]))
     table.wrapOn(c, width, height)
     table.drawOn(c, 50, 50)
+
+    members_dict = {m.user_id: getattr(m.user, 'first_name', str(m.user_id)) for m in members}
+    balance = calculate_debts(wallet, incomes, expenses, members)
+    report_text = debt_report(balance, members_dict)
+    c.setFont("Roboto", 12)
+    for idx, line in enumerate(report_text.splitlines()):
+        c.drawString(50, height - 480 - idx * 18, line)
 
     c.save()
