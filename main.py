@@ -2,6 +2,7 @@ import asyncio
 import logging
 from maxapi import Bot, Dispatcher
 from maxapi.enums.parse_mode import ParseMode
+from maxapi.types import BotCommand
 
 from config import settings
 from database.db import init_db
@@ -20,6 +21,7 @@ async def main():
     await register_handlers(dp)
 
     logger.info("Бот запущен!")
+    await bot.set_my_commands(BotCommand(name="start", description="Начать"))
     await bot.delete_webhook()
     await dp.start_polling(bot)
 

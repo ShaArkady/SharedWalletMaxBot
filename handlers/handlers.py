@@ -553,3 +553,15 @@ async def register_handlers(dp: Dispatcher):
             )
 
         await show_my_expenses(event, context)
+
+    @dp.message_created(F.message.body.text)
+    async def unknown_message_handler(event: MessageCreated, context: MemoryContext):
+        """
+        Срабатывает, если пользователь написал что-то, что не является командой и не подходит под
+        активное состояние диалога.
+        """
+        current_state = await context.get_state()
+
+        if current_state is None:
+            await event.message.answer("🤔 Я не понял вашу команду")
+            await show_main_menu(message=None, context=context, bot=event.bot, user_id=event.from_user.user_id)
